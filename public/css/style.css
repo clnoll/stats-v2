@@ -1,0 +1,93 @@
+* {
+  // color: black;
+  font-family: 'Lato', sans-serif;
+  // border: 1px solid red;
+}
+
+[ng\:cloak],
+[ng-cloak],
+[data-ng-cloak],
+[x-ng-cloak],
+.ng-cloak,
+.x-ng-cloak {
+  display: none !important;
+}
+.container {
+  width: 100%;
+}
+svg {
+  padding: 0px;
+  margin: 0px;
+}
+#navcontainer {
+  background-color: black;
+  width: 100%;
+  color: #B8A8CE;
+}
+#chartTitle {
+  color: #4B2D73;
+  font-family: 'Lato', sans-serif;
+  float: center;
+  margin: 10px;
+  text-align: center;
+  background-color: #E5E2E9;
+}
+
+.view-menu {
+  display: inline;
+  padding: 5px;
+  font-style: italic;
+  // background-color: white;
+  margin: 10px;
+}
+.nv-measure {
+  fill:  black;
+}
+.span8 {
+  // width: 70%;
+  display: inline-flex;
+}
+.span4 {
+  display: inline-flex;
+}
+#chart {
+  display: inline;
+}
+.nvtooltip * {
+  font-size: 11px;
+}
+#details {
+  background-color: gray;
+  // color: white;
+  margin-right: -20px;
+}
+.nvd3-bullet-chart1 * {
+  float: left;
+}
+.nvd3-bar-chart1 * {
+  float: left;
+}
+.nvd3-pie-chart1 * {
+  float: left;
+}
+h2 {
+  font-family: 'Lato', sans-serif;
+  text-align: center;
+  // color: #4B2D73;
+  font-size: 15px;
+  font-weight: bold;
+  background-color: #E5E2E9;
+}
+// .col-lg-7.col-md-12.col-sm-12.col-xs-12 * {
+//   background-color: #A8A5AD;
+// }
+.row-fluid.col-md-12.col-sm-12.col-lg-12 {
+  // background-color: #E5E2E9;
+}
+.container-fluid.ng-scope * {
+  // background-color: black;
+}
+form {
+  // color: #4B2D73;
+  font-weight: bold;
+}

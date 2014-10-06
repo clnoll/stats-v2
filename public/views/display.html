@@ -1,0 +1,63 @@
+<div resizable class="container-fluid" ng-controller="mainCtrl">
+    <h1 id="chartTitle">App Stats 8/2013 - 9/2014</h1>
+    <hr>
+
+    <div id="big-charts" class="row-fluid col-md-12 col-sm-12 col-lg-12">
+        <!-- <div class="span12"> -->
+            <!-- Radio buttons -->
+            <div class="row-fluid">
+                <div class="span12">
+                    <form>
+                        <div id="view-menu">Stats by
+                            <div class="view-menu" ng-repeat="filter in filterOptions.filters">
+                                <input class="view-menu" type="radio" ng-model="filterOptions.selectedFilter" ng-value="filter" name="filter">
+                                <label for="{{filter}}">{{filter}}
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <hr>
+        <div class="col-lg-5 col-md-5 col-sm-5">
+            <!-- Charts -->
+            <div class="row-fluid"><h2>Daily Average Users</h2>
+                <!-- Line charts - cumulative -->
+                <div id="dau-chart" data="subsetVals" showXAxis="true" showYAxis="true">
+                    <svg id="dau-chart"></svg>
+                </div>
+            </div>
+            <hr>
+            <div class="row-fluid"><h2>D1 Retention (%)</h2>
+                <div id="retention-chart" data="subsetVals" showXAxis="true" showYAxis="true">
+                    <svg id="retention-chart"></svg>
+                </div>
+            </div>
+        </div>
+        <!-- Detail charts -->
+        <div class="col-lg-7 col-md-12 col-sm-12 col-xs-12">
+            <div class="row-fluid-lg row-fluid-md row-fluid-sm row-fluid-sx">
+                <div id="details" class="span4-md span4-sm span4-xs">
+                    <div class="row-fluid">
+                    <div class="span5-md span5-sm span5-xs">
+                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+                            <div ng-cloak class="nvd3-bullet-chart2" id="chart" data="subsetVals" showXAxis="true" showYAxis="true">
+                        </div>
+                    </div>
+                    <div class="span4-md span4-sm span4-xs">
+                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                        <div ng-cloak class="nvd3-pie-chart2" id="chart">
+                        </div>
+                    </div>
+                    </div>
+                    <div class="span4-md span4-sm span4-xs">
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
+                            <div ng-cloak class="nvd3-bar-chart2" id="chart">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
