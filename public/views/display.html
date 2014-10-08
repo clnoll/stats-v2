@@ -22,7 +22,7 @@
         <div class="col-lg-5 col-md-5 col-sm-5">
             <!-- Charts -->
             <div class="row-fluid"><h2>Daily Average Users</h2>
-                <!-- Line charts - cumulative -->
+                <!-- Line charts - nested cumulative -->
                 <div id="dau-chart" data="subsetVals" showXAxis="true" showYAxis="true">
                     <svg id="dau-chart"></svg>
                 </div>
@@ -40,21 +40,28 @@
                 <div id="details" class="span4-md span4-sm span4-xs">
                     <div class="row-fluid">
                     <div class="span5-md span5-sm span5-xs">
-                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
-                            <div ng-cloak class="nvd3-bullet-chart2" id="chart" data="subsetVals" showXAxis="true" showYAxis="true">
-                        </div>
-                    </div>
-                    <div class="span4-md span4-sm span4-xs">
-                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
-                        <div ng-cloak class="nvd3-pie-chart2" id="chart">
-                        </div>
-                    </div>
-                    </div>
-                    <div class="span4-md span4-sm span4-xs">
-                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
-                            <div ng-cloak class="nvd3-bar-chart2" id="chart">
+                        <!-- <a href="#/app/{{appname}}">
+                            <p>Appname:{{appname}}</p> -->
+                            <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+                                <div ng-cloak class="nvd3-bullet-chart2" id="chart" data="subsetVals" showXAxis="true" showYAxis="true">
                             </div>
                         </div>
+                    <!-- </a> -->
+                    <div class="span4-md span4-sm span4-xs">
+                        <!-- <a href="/app/{{appname}}"> -->
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                                <div ng-cloak class="nvd3-pie-chart2" id="chart">
+                                </div>
+                            </div>
+                        <!-- </a> -->
+                    </div>
+                    <div class="span4-md span4-sm span4-xs">
+                        <!-- <a href="/app/{{appname}}"> -->
+                            <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
+                                <div ng-cloak class="nvd3-bar-chart2" id="chart">
+                                </div>
+                            </div>
+                        <!-- </a> -->
                     </div>
                 </div>
             </div>

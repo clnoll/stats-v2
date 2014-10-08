@@ -3,6 +3,7 @@ app.factory("dataService", ['$q', function($q) {
   // Set filter options for scope
   var filterOptions =  {
     filters: ['App', 'Category', 'Platform'],
+    selectedFilter: "App"
   };
   var metricOptions =  {
     metrics: ['D1 Retention', 'DAU'],
@@ -19,6 +20,13 @@ app.factory("dataService", ['$q', function($q) {
       return str.substr(0, 3) + str.substr(5);
   };
 
+  // Use d3's nest method to reorganize data by date
+  var nestByDateFunction = d3.nest().key(function(d) {
+      return d.Metric;
+  }).key(function(d) {
+      return d.Date;
+  });
+
   // Use d3's nest method to reorganize data by the selected filter and date
   var nestFunction = d3.nest().key(function(d) {
       if (filterOptions.selectedFilter === "App") {
@@ -31,7 +39,6 @@ app.factory("dataService", ['$q', function($q) {
   }).key(function(d) {
       return d.Date;
   });
-
 
   // Format nested data prior to rollup, for cumulative charts
   var entriesFxn = function(d) {
@@ -49,11 +56,6 @@ app.factory("dataService", ['$q', function($q) {
       }
       return d;
   };
-
-  var rollupFxn = function(d) {
-
-  }
-
 
   // DETAIL CHARTS
 
@@ -74,10 +76,12 @@ app.factory("dataService", ['$q', function($q) {
     metricOptions: metricOptions,
     appOptions: appOptions,
     nestFunction: nestFunction,
+    nestByDateFunction: nestByDateFunction,
+
     // nestFunctionDetails: nestFunctionDetails,
     entriesFxn: entriesFxn,
     entriesDetailFxn: entriesDetailFxn,
-    dateLabels: dateLabels,
+    dateLabels: dateLabels
     // stats: stats
   }
 

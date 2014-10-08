@@ -1,5 +1,7 @@
 require 'sinatra'
+require 'json'
 require_relative './renzu/get_graphs.rb'
+enable :sessions
 
 class Renzu::App < Sinatra::Application
   get '/' do

@@ -6,11 +6,9 @@ app.config(function($routeProvider) {
     // route for the display page
         .when('/', {
             templateUrl: '/views/display.html',
-            // controller: 'allDAUCtrl'
+        })
+        .when('/app/:appname', {
+            templateUrl: 'views/details.html',
         });
-        // .when('/detail', {
-        //     templateUrl: 'views/appDetails.html',
-        //     controller: 'detailAppDataCtrl'
-        // });
 });
 

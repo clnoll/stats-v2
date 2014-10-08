@@ -1,0 +1,13 @@
+<div resizable class="container-fluid" ng-controller="detailCtrl">
+    <h1 id="chartTitle">{{appname}} Stats 8/2013 - 9/2014</h1>
+    <hr>
+
+    <div class="container">
+        <!-- Detail charts -->
+      <div ng-cloak class="nvd3-bullet-chart2" id="chart" data="subsetVals" showXAxis="true" showYAxis="true">
+      </div>
+      <div ng-cloak class="nvd3-pie-chart2" id="chart">
+      </div>
+      <div ng-cloak class="nvd3-bar-chart2" id="chart">
+      </div>
+    </div>

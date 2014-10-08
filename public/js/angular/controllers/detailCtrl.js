@@ -1,12 +1,8 @@
-app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
-    function($scope, dataService, $routeParams, $location) {
-
-        // Set filter options - outside of D3 due to asynchronicity
-        $scope.filterOptions = dataService.filterOptions;
-        $scope.metricOptions = dataService.metricOptions;
-        $scope.appOptions = dataService.appOptions;
-        $scope.appname = ''
-
+app.controller('detailCtrl', ['$scope', 'dataService', '$routeParams',
+    function($scope, dataService, $location, $routeParams) {
+        // Set appname based on routeParams
+        $scope.appname = $location.appname;
+        console.log("Appname" + $scope.appname)
         // Assign filter to the scope by watching changes to the $scope.filterOptions object
         $scope.$watch("filterOptions.selectedFilter", function(newVal, oldVal, scope) {
             var initializing = true;
@@ -36,118 +32,6 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                         return row['Metric'] == 'DAU';
                     });
 
-                    // Function to get DAU charts
-                    var getNestedDau = function(dataset) {
-
-                        var datasetMax = 0;
-                            // Sum values by category and date
-                        var rollup = dataService.nestFunction.rollup(function(d) {
-                            return d3.sum(d, function(g) {
-                                return +g.y;
-                            });
-                        });
-
-                        // Map data to nested App
-                        var chartDAUData = rollup.entries(
-                            dataset.map(function(d) {
-                                if (d.y > datasetMax) {
-                                    datasetMax = d.y;
-                                }
-                                return dataService.entriesFxn(d);
-                            })
-                        );
-
-                        // Use NVD3 library to add Line Chart for cumulative app use
-                        nv.addGraph(function() {
-                            var chart = nv.models.lineChart()
-                                .x(function(d) {
-                                    return new Date(d.key);
-                                })
-                                .y(function(d) {
-                                    return d.values;
-                                })
-                                .useInteractiveGuideline(true)
-                                .clipEdge(true);
-
-                            chart.xAxis
-                                .axisLabel("Date")
-                                .tickFormat(function(d) {
-                                    return dataService.dateLabels(d);
-                                })
-                                .scale()
-                                .domain([startDate, endDate]);
-
-                            chart.yAxis
-                                .axisLabel("Users")
-                                // .axisLabelDistance(100)
-                                .tickFormat(d3.format(',f'))
-                                .scale()
-                                .domain([0, datasetMax]);
-
-                            d3.select('#dau-chart svg')
-                                .datum(chartDAUData)
-                                .style(dimensions)
-                                .call(chart);
-
-                            nv.utils.windowResize(chart.update);
-                            return chart;
-                        });
-                    };
-
-                    // Function to get Retention charts
-                    var getNestedRetention = function(dataset) {
-                        // Get avg percentages by category and date
-                        var rollup = dataService.nestFunction.rollup(function(d) {
-                            return d3.mean(d, function(g) {
-                                return +g.y;
-                            });
-                        });
-
-                        // Map data to nested App
-                        var chartRetentionData = rollup.entries(
-                            dataset.map(function(d) {
-                                return dataService.entriesFxn(d);
-                            })
-                        );
-
-                        // Use NVD3 library to add Line Chart for cumulative app use
-                        nv.addGraph(function() {
-                            var chart = nv.models.lineChart()
-                                .x(function(d) {
-                                    return new Date(d.key);
-                                })
-                                .y(function(d) {
-                                    return d.values;
-                                })
-                                .useInteractiveGuideline(true)
-                                .clipEdge(true);
-
-                            chart.xAxis
-                                .axisLabel("Date")
-                                .tickFormat(function(d) {
-                                    return dataService.dateLabels(d);
-                                })
-                                .scale()
-                                .domain([startDate, endDate]);
-
-                            chart.yAxis
-                                .axisLabel("% Retention")
-                                // .axisLabelDistance(100)
-                                .tickFormat(d3.format(',f'))
-                                .scale()
-                                .domain([0, 100]);
-
-                            d3.select('#retention-chart svg')
-                                .datum(chartRetentionData)
-                                .style(dimensions)
-                                .call(chart);
-
-                            nv.utils.windowResize(chart.update);
-
-                            return chart;
-                        });
-                    };
-
                     // Function to get DAU detail charts (by App)
                     var getDauDetails = function(dataset) {
                       var stats = {
@@ -160,8 +44,6 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                               androidMinDailyValue: 0,
                               androidMaxDailyValue: 0
                           };
-                    $scope.appname = stats.app;
-                    $scope.appname = $routeParams.appname;
 
                           // Nest function for detail charts
                           var nestFunctionDetails = d3.nest().key(function(d) {
@@ -229,8 +111,6 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                             var chart = nv.models.bulletChart();
 
                             d3.select('.nvd3-bullet-chart' + i)
-                                .append('a')
-                                .attr('href', '/#/app/' + stats.app)
                                 .append('svg')
                                 .attr('class', 'nvd3-bullet-chart1')
                                 .datum(exampleData())
@@ -274,8 +154,6 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                             chart.showLegend(false);
 
                             d3.select('.nvd3-bar-chart' + i)
-                              .append('a')
-                              .attr('href', '/#/app/' + stats.app)
                               .append('svg')
                               .attr('class', 'nvd3-bar-chart1')
                               .datum(barStats)
@@ -303,8 +181,6 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                                 .color(myColors);
 
                             d3.select(".nvd3-pie-chart" + i)
-                                .append('a')
-                                .attr('href', '/#/app/' + stats.app)
                                 .append('svg')
                                 .attr('class', 'nvd3-pie-chart1')
                                 .datum(chartDAUData)
@@ -327,38 +203,12 @@ app.controller('mainCtrl', ['$scope', 'dataService', '$routeParams',
                         i+= 1;
                     };
 
-                    // Call functions to create the overview charts
-                    getNestedDau(dataset);
-                    getNestedRetention(retention);
-
-                    // for(option in $scope.appOptions.apps) {
-                    //     var data = dataset.filter(function(row) {
-                    //         var opt = $scope.appOptions.apps[parseInt(option)];
-                    //         return row['App'] == opt;
-                    //     })
-                    //     getDauDetails(data);
-                    // }
-
+                    // Call functions to create the charts
                     var canData = dataset.filter(function(row) {
-                        return row['App'] == 'CandyBash';
+                        return row['App'] == $scope.appname;
                     });
-                    var wweData = dataset.filter(function(row) {
-                        return row['App'] == 'Words With Enemies';
-                    });
-                    var craData = dataset.filter(function(row) {
-                        return row['App'] == 'Crappy Birds';
-                    });
-                    var zubData = dataset.filter(function(row) {
-                        return row['App'] == 'Zuber';
-                    });
-                    var carData = dataset.filter(function(row) {
-                        return row['App'] == 'Carry';
-                    });
+
                     getDauDetails(canData);
-                    getDauDetails(wweData);
-                    getDauDetails(craData);
-                    getDauDetails(zubData);
-                    getDauDetails(carData);
 
                     var tooltip = d3.select("div.tooltip");
 
