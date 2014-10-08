@@ -1,17 +1,12 @@
-app.controller('mainCtrl', ['$scope',
-    function($scope) {
+app.controller('mainCtrl', ['$scope', 'dataService',
+    function($scope, dataService) {
+
         // Set filter options - outside of D3 due to asynchronicity
-        $scope.filterOptions = {
-            filters: ['App', 'Category', 'Platform'],
-            selectedFilter: 'App'
-        };
-        $scope.metricOptions = {
-            metrics: ['D1 Retention', 'DAU'],
-            selectedMetric: 'DAU'
-        };
-        $scope.appOptions = {
-            apps: ['CandyBash', 'Words with Enemies', 'Crappy Birds', 'Zuber', 'Carry']
-        };
+        $scope.filterOptions = dataService.filterOptions
+        $scope.metricOptions = dataService.metricOptions
+        $scope.appOptions = dataService.appOptions
+
+        $scope.selectedMetric =  $scope.selectedMetric || dataService.metricOptions.metrics[1]
 
         // Assign filter to the scope by watching changes to the $scope.filterOptions object
         $scope.$watch("filterOptions.selectedFilter", function(newVal, oldVal, scope) {
@@ -20,9 +15,6 @@ app.controller('mainCtrl', ['$scope',
                 initializing = false;
                 return;
             }
-
-            // scope.filterOptions.selectedFilter = newVal;
-
             // Pull in csv file with d3
             d3.csv('resources/challenge-dataset.csv', function(dataset) {
                     // Set start and end dates for dataset
@@ -45,59 +37,11 @@ app.controller('mainCtrl', ['$scope',
                         return row['Metric'] == 'DAU';
                     });
 
-                    // Use d3's nest method to reorganize data by the selected filter and date
-                    var nestFunction = d3.nest().key(function(d) {
-                        if ($scope.filterOptions.selectedFilter === "App") {
-                            return d.App;
-                        } else if ($scope.filterOptions.selectedFilter === "Category") {
-                            return d.Category;
-                        } else if ($scope.filterOptions.selectedFilter === "Platform") {
-                            return d.Platform;
-                        }
-                    }).key(function(d) {
-                        return d.Date;
-                    });
-
-                    // Format date for line chart labels
-                    var dateLabels = function(d) {
-                        str = d3.time.format('%m/%Y')(new Date(d));
-                        return str.substr(0, 3) + str.substr(5);
-                    };
-
-                    // Format nested data prior to rollup, for cumulative charts
-                    var entriesFxn = function(d) {
-                        // Parse date values to JavaScript date object
-                        var format = d3.time.format("%m/%d/%Y");
-                        var parseFormat = format.parse(d.Date);
-                        d.Date = format.parse(d.Date);
-                        // Assign x and y variables for import into chart
-                        d.x = d.Date;
-                        if (d.Metric === "DAU") {
-                            d.y = +d.Value;
-                        } else if (d.Metric === "D1 Retention") {
-                            var str = d.Value;
-                            d.y = +(str.substring(0, str.length - 1)); // remove % sign and change string to numerical value
-                        }
-                        return d;
-                    };
-
-                    // Format nested data prior to rollup, for detail charts
-                    var entriesDetailFxn = function(d) {
-                        if (d.Metric === "DAU") {
-                            d.y = +d.Value;
-                        } else if (d.Metric === "D1 Retention") {
-                            var str = d.Value;
-                            d.x = d.Platform;
-                            d.y = +(str.substring(0, str.length - 1)); // remove % sign and change string to numerical value
-                        }
-                        return d;
-                    };
-
                     // Function to get DAU charts
                     var getDau = function(dataset) {
                         var datasetMax = 0;
                             // Sum values by category and date
-                        var rollup = nestFunction.rollup(function(d) {
+                        var rollup = dataService.nestFunction.rollup(function(d) {
                             return d3.sum(d, function(g) {
                                 return +g.y;
                             });
@@ -109,7 +53,7 @@ app.controller('mainCtrl', ['$scope',
                                 if (d.y > datasetMax) {
                                     datasetMax = d.y;
                                 }
-                                return entriesFxn(d);
+                                return dataService.entriesFxn(d);
                             })
                         );
 
@@ -128,7 +72,7 @@ app.controller('mainCtrl', ['$scope',
                             chart.xAxis
                                 .axisLabel("Date")
                                 .tickFormat(function(d) {
-                                    return dateLabels(d);
+                                    return dataService.dateLabels(d);
                                 })
                                 .scale()
                                 .domain([startDate, endDate]);
@@ -153,7 +97,7 @@ app.controller('mainCtrl', ['$scope',
                     // Function to get Retention charts
                     var getRetention = function(dataset) {
                         // Get avg percentages by category and date
-                        var rollup = nestFunction.rollup(function(d) {
+                        var rollup = dataService.nestFunction.rollup(function(d) {
                             return d3.mean(d, function(g) {
                                 return +g.y;
                             });
@@ -162,7 +106,7 @@ app.controller('mainCtrl', ['$scope',
                         // Map data to nested App
                         var chartRetentionData = rollup.entries(
                             dataset.map(function(d) {
-                                return entriesFxn(d);
+                                return dataService.entriesFxn(d);
                             })
                         );
 
@@ -181,7 +125,7 @@ app.controller('mainCtrl', ['$scope',
                             chart.xAxis
                                 .axisLabel("Date")
                                 .tickFormat(function(d) {
-                                    return dateLabels(d);
+                                    return dataService.dateLabels(d);
                                 })
                                 .scale()
                                 .domain([startDate, endDate]);
@@ -206,49 +150,18 @@ app.controller('mainCtrl', ['$scope',
 
                     // Function to get DAU detail charts (by App)
                     var getDauDetails = function(dataset) {
-                        // Create stats object to house data for charts
-                        var stats = {
-                                app: dataset[0].App,
-                                totalDAU: 0,
-                                minDailyValue: 0,
-                                maxDailyValue: 0,
-                                iOSMinDailyValue: 0,
-                                iOSMaxDailyValue: 0,
-                                androidMinDailyValue: 0,
-                                androidMaxDailyValue: 0
-                            };
-                        // Reorganize data by platform
-                        var nestFunction = d3.nest().key(function(d) {
-                            val = parseInt(d.Value);
-                            if (d.Platform === "iOS") {
-                                if (stats.iOSMinDailyValue == 0 || val < stats.iOSMinDailyValue) {
-                                    stats.iOSMinDailyValue = val;
-                                }
-                                if (val > stats.iOSMaxDailyValue) {
-                                    stats.iOSMaxDailyValue = val;
-                                }
-                            } else if (d.Platform === "Android") {
-                                if (stats.androidMinDailyValue == 0 || val < stats.androidMinDailyValue) {
-                                    stats.androidMinDailyValue = val;
-                                }
-                                if (val > stats.androidMaxDailyValue) {
-                                    stats.androidMaxDailyValue = val;
-                                }
-                            }
-                            return d.Platform;
-                        });
 
                         // Sum values by category
-                        var rollup = nestFunction.rollup(function(d) {
+                        var rollup = dataService.nestFunctionDetails.rollup(function(d) {
                             if (d[d.length - 1].Platform === "iOS") {
-                                stats.iOSLatest = parseInt(d[d.length - 1].Value);
+                                dataService.stats.iOSLatest = parseInt(d[d.length - 1].Value);
                             } else if (d[d.length - 1].Platform === "Android") {
-                                stats.androidLatest = parseInt(d[d.length - 1].Value);
+                                dataService.stats.androidLatest = parseInt(d[d.length - 1].Value);
                             }
                             if (d[d.length - 2].Platform === "iOS") {
-                                stats.iOSLatest = parseInt(d[d.length - 1].Value);
+                                dataService.stats.iOSLatest = parseInt(d[d.length - 1].Value);
                             } else if (d[d.length - 2].Platform === "Android") {
-                                stats.androidLatest = parseInt(d[d.length - 2].Value);
+                                dataService.stats.androidLatest = parseInt(d[d.length - 2].Value);
                             }
 
                             return d3.sum(d, function(g) {
@@ -259,20 +172,20 @@ app.controller('mainCtrl', ['$scope',
                         // Map data to nested App
                         var chartDAUData = rollup.entries(
                             dataset.map(function(d) {
-                                return entriesDetailFxn(d);
+                                return dataService.entriesDetailFxn(d);
                             })
                         );
 
                         // Calculate stats
                         for (var item in chartDAUData) {
                             var objKey = chartDAUData[item].key;
-                            stats[objKey] = chartDAUData[item].values;
-                            stats.totalDAU += chartDAUData[item].values;
+                            dataService.stats[objKey] = chartDAUData[item].values;
+                            dataService.stats.totalDAU += chartDAUData[item].values;
                         }
-                        stats.minDailyValue = stats.iOSMinDailyValue + stats.androidMinDailyValue;
-                        stats.maxDailyValue = stats.iOSMaxDailyValue + stats.androidMaxDailyValue;
-                        stats.meanDailyValue = parseInt((stats.minDailyValue + stats.maxDailyValue) / 2);
-                        stats.latestValue = stats.iOSLatest + stats.androidLatest;
+                        dataService.stats.minDailyValue = dataService.stats.iOSMinDailyValue + dataService.stats.androidMinDailyValue;
+                        dataService.stats.maxDailyValue = dataService.stats.iOSMaxDailyValue + dataService.stats.androidMaxDailyValue;
+                        dataService.stats.meanDailyValue = parseInt((dataService.stats.minDailyValue + dataService.stats.maxDailyValue) / 2);
+                        dataService.stats.latestValue = dataService.stats.iOSLatest + dataService.stats.androidLatest;
 
                         // Global variable to increment class
                         var i = 1;
@@ -300,16 +213,16 @@ app.controller('mainCtrl', ['$scope',
                                 { key: 'iOS',
                                   color: "#A865CD",
                                   values: [
-                                    { x: 'Min', y: stats.iOSMinDailyValue/1000000 },
-                                    { x: 'Max', y: stats.iOSMaxDailyValue/1000000 },
-                                    { x: 'Latest', y: stats.iOSLatest/1000000 }
+                                    { x: 'Min', y: dataService.stats.iOSMinDailyValue/1000000 },
+                                    { x: 'Max', y: dataService.stats.iOSMaxDailyValue/1000000 },
+                                    { x: 'Latest', y: dataService.stats.iOSLatest/1000000 }
                                   ]},
                                 { key: 'Android',
                                   color: "#FFFF78",
                                   values: [
-                                    { x: 'Min', y: stats.androidMinDailyValue/1000000 },
-                                    { x: 'Max', y: stats.androidMaxDailyValue/1000000 },
-                                    { x: 'Latest', y: stats.androidLatest/1000000 }
+                                    { x: 'Min', y: dataService.stats.androidMinDailyValue/1000000 },
+                                    { x: 'Max', y: dataService.stats.androidMaxDailyValue/1000000 },
+                                    { x: 'Latest', y: dataService.stats.androidLatest/1000000 }
                                   ]
                                 }];
 
@@ -363,11 +276,11 @@ app.controller('mainCtrl', ['$scope',
 
                         function exampleData() {
                             return {
-                                "title": stats.app,
+                                "title": dataService.stats.app,
                                 "subtitle": "DAU (m)",
-                                "ranges": [stats.minDailyValue/1000000, stats.meanDailyValue/1000000, stats.maxDailyValue/1000000], //Minimum, mean and maximum values.
-                                "measures": [stats.maxDailyValue/1000000], //Value representing current measurement (the thick blue line in the example)
-                                "markers": [stats.latestValue/1000000] //Place a marker on the chart (the white triangle marker)
+                                "ranges": [dataService.stats.minDailyValue/1000000, dataService.stats.meanDailyValue/1000000, dataService.stats.maxDailyValue/1000000], //Minimum, mean and maximum values.
+                                "measures": [dataService.stats.maxDailyValue/1000000], //Value representing current measurement (the thick blue line in the example)
+                                "markers": [dataService.stats.latestValue/1000000] //Place a marker on the chart (the white triangle marker)
                             };
                         }
 
