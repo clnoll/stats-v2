@@ -39,23 +39,7 @@ app.controller('mainCtrl', ['$scope', 'dataService',
 
                     // Function to get DAU charts
                     var getDau = function(dataset) {
-                        var datasetMax = 0;
-                            // Sum values by category and date
-                        var rollup = dataService.nestFunction.rollup(function(d) {
-                            return d3.sum(d, function(g) {
-                                return +g.y;
-                            });
-                        });
 
-                        // Map data to nested App
-                        var chartDAUData = rollup.entries(
-                            dataset.map(function(d) {
-                                if (d.y > datasetMax) {
-                                    datasetMax = d.y;
-                                }
-                                return dataService.entriesFxn(d);
-                            })
-                        );
 
                         // Use NVD3 library to add Line Chart for cumulative app use
                         nv.addGraph(function() {
@@ -93,6 +77,8 @@ app.controller('mainCtrl', ['$scope', 'dataService',
                             return chart;
                         });
                     };
+
+
 
                     // Function to get Retention charts
                     var getRetention = function(dataset) {
@@ -150,18 +136,53 @@ app.controller('mainCtrl', ['$scope', 'dataService',
 
                     // Function to get DAU detail charts (by App)
                     var getDauDetails = function(dataset) {
+  var stats = {
+          app: dataset[0].App,
+          totalDAU: 0,
+          minDailyValue: 0,
+          maxDailyValue: 0,
+          iOSMinDailyValue: 0,
+          iOSMaxDailyValue: 0,
+          androidMinDailyValue: 0,
+          androidMaxDailyValue: 0
+      };
+
+  // Nest function for detail charts
+  var nestFunctionDetails = d3.nest().key(function(d) {
+      // stats.app
+      val = parseInt(d.Value);
+      if (d.Platform === "iOS") {
+          if (stats.iOSMinDailyValue == 0 || val < stats.iOSMinDailyValue) {
+              stats.iOSMinDailyValue = val;
+          }
+          if (val > stats.iOSMaxDailyValue) {
+              stats.iOSMaxDailyValue = val;
+          }
+      } else if (d.Platform === "Android") {
+          if (stats.androidMinDailyValue == 0 || val < stats.androidMinDailyValue) {
+              stats.androidMinDailyValue = val;
+          }
+          if (val > stats.androidMaxDailyValue) {
+              stats.androidMaxDailyValue = val;
+          }
+      }
+      return d.Platform;
+  });
+
+
+
 
                         // Sum values by category
-                        var rollup = dataService.nestFunctionDetails.rollup(function(d) {
+                        var rollup = nestFunctionDetails.rollup(function(d) {
                             if (d[d.length - 1].Platform === "iOS") {
-                                dataService.stats.iOSLatest = parseInt(d[d.length - 1].Value);
+                                stats.iOSLatest = parseInt(d[d.length - 1].Value);
                             } else if (d[d.length - 1].Platform === "Android") {
-                                dataService.stats.androidLatest = parseInt(d[d.length - 1].Value);
+                                stats.androidLatest = parseInt(d[d.length - 1].Value);
                             }
                             if (d[d.length - 2].Platform === "iOS") {
-                                dataService.stats.iOSLatest = parseInt(d[d.length - 1].Value);
+                                stats.iOSLatest = parseInt(d[d.length - 1].Value);
                             } else if (d[d.length - 2].Platform === "Android") {
-                                dataService.stats.androidLatest = parseInt(d[d.length - 2].Value);
+                                stats.androidLatest = parseInt(d[d.length - 2].Value);
                             }
 
                             return d3.sum(d, function(g) {
@@ -179,13 +200,13 @@ app.controller('mainCtrl', ['$scope', 'dataService',
                         // Calculate stats
                         for (var item in chartDAUData) {
                             var objKey = chartDAUData[item].key;
-                            dataService.stats[objKey] = chartDAUData[item].values;
-                            dataService.stats.totalDAU += chartDAUData[item].values;
+                            stats[objKey] = chartDAUData[item].values;
+                            stats.totalDAU += chartDAUData[item].values;
                         }
-                        dataService.stats.minDailyValue = dataService.stats.iOSMinDailyValue + dataService.stats.androidMinDailyValue;
-                        dataService.stats.maxDailyValue = dataService.stats.iOSMaxDailyValue + dataService.stats.androidMaxDailyValue;
-                        dataService.stats.meanDailyValue = parseInt((dataService.stats.minDailyValue + dataService.stats.maxDailyValue) / 2);
-                        dataService.stats.latestValue = dataService.stats.iOSLatest + dataService.stats.androidLatest;
+                        stats.minDailyValue = stats.iOSMinDailyValue + stats.androidMinDailyValue;
+                        stats.maxDailyValue = stats.iOSMaxDailyValue + stats.androidMaxDailyValue;
+                        stats.meanDailyValue = parseInt((stats.minDailyValue + stats.maxDailyValue) / 2);
+                        stats.latestValue = stats.iOSLatest + stats.androidLatest;
 
                         // Global variable to increment class
                         var i = 1;
@@ -213,16 +234,16 @@ app.controller('mainCtrl', ['$scope', 'dataService',
                                 { key: 'iOS',
                                   color: "#A865CD",
                                   values: [
-                                    { x: 'Min', y: dataService.stats.iOSMinDailyValue/1000000 },
-                                    { x: 'Max', y: dataService.stats.iOSMaxDailyValue/1000000 },
-                                    { x: 'Latest', y: dataService.stats.iOSLatest/1000000 }
+                                    { x: 'Min', y: stats.iOSMinDailyValue/1000000 },
+                                    { x: 'Max', y: stats.iOSMaxDailyValue/1000000 },
+                                    { x: 'Latest', y: stats.iOSLatest/1000000 }
                                   ]},
                                 { key: 'Android',
                                   color: "#FFFF78",
                                   values: [
-                                    { x: 'Min', y: dataService.stats.androidMinDailyValue/1000000 },
-                                    { x: 'Max', y: dataService.stats.androidMaxDailyValue/1000000 },
-                                    { x: 'Latest', y: dataService.stats.androidLatest/1000000 }
+                                    { x: 'Min', y: stats.androidMinDailyValue/1000000 },
+                                    { x: 'Max', y: stats.androidMaxDailyValue/1000000 },
+                                    { x: 'Latest', y: stats.androidLatest/1000000 }
                                   ]
                                 }];
 
@@ -276,11 +297,11 @@ app.controller('mainCtrl', ['$scope', 'dataService',
 
                         function exampleData() {
                             return {
-                                "title": dataService.stats.app,
+                                "title": stats.app,
                                 "subtitle": "DAU (m)",
-                                "ranges": [dataService.stats.minDailyValue/1000000, dataService.stats.meanDailyValue/1000000, dataService.stats.maxDailyValue/1000000], //Minimum, mean and maximum values.
-                                "measures": [dataService.stats.maxDailyValue/1000000], //Value representing current measurement (the thick blue line in the example)
-                                "markers": [dataService.stats.latestValue/1000000] //Place a marker on the chart (the white triangle marker)
+                                "ranges": [stats.minDailyValue/1000000, stats.meanDailyValue/1000000, stats.maxDailyValue/1000000], //Minimum, mean and maximum values.
+                                "measures": [stats.maxDailyValue/1000000], //Value representing current measurement (the thick blue line in the example)
+                                "markers": [stats.latestValue/1000000] //Place a marker on the chart (the white triangle marker)
                             };
                         }
 
